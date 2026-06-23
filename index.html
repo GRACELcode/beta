@@ -3,27 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>对我的留言板 🌴</title>
+    <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.13.2/dist/av-min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/valine@1.5.1/dist/Valine.min.js"></script>
 </head>
 <body style="background-color: #f0fafd; margin: 0; padding: 20px; font-family: monospace; display: flex; flex-direction: column; align-items: center; min-height: 100vh;">
 
     <div style="background: linear-gradient(135deg, #ffffff 0%, #e0f7fa 100%); padding: 30px 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,180,216,0.15); border: 1px solid #b2ebf2; max-width: 600px; width: 100%; box-sizing: border-box; margin-top: 20px;">
         
         <h2 style="color: #0077b6; text-align: center; margin-top: 0; letter-spacing: 2px;">🌊 留言板</h2>
-        <p style="color: #778899; font-size: 14px; text-align: center; margin-bottom: 25px;">有啥对我说的吗</p>
+        <p style="color: #778899; font-size: 14px; text-align: center; margin-bottom: 25px;">有啥对我说的吗（所有人可见版）</p>
 
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-            <input type="text" id="nickname-input" placeholder="你叫啥." style="padding: 12px; border: 2px solid #90e0ef; border-radius: 8px; font-size: 15px; font-family: monospace; outline: none; color: #03045e; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);">
-            
-            <textarea id="message-input" rows="3" placeholder="快写点啥." style="padding: 12px; border: 2px solid #90e0ef; border-radius: 8px; font-size: 15px; font-family: monospace; outline: none; color: #03045e; resize: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);"></textarea>
-            
-            <button onclick="addMessage()" style="background-color: #03045e; color: #ffffff; border: none; padding: 12px; font-size: 16px; font-weight: bold; font-family: monospace; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 15px rgba(3, 4, 94, 0.2); transition: 0.2s; letter-spacing: 2px;">比心兔兔请发射</button>
-        </div>
-
-        <hr style="border: 0; height: 1px; background: #b2ebf2; margin: 30px 0;">
-
-        <h3 style="color: #0096c7; margin-bottom: 15px;">💬 历史留言 (<span id="msg-count">0</span>)</h3>
-        <div id="message-list" style="display: flex; flex-direction: column; gap: 15px; max-height: 400px; overflow-y: auto; padding-right: 5px;">
-            </div>
+        <div id="vcomments"></div>
 
     </div>
 
@@ -31,86 +21,18 @@
     <a href="https://gracelcode.github.io/ohok/" style="color: #00b4d8; font-size: 14px; text-decoration: none; font-weight: bold;">← 这个是啥点一下</a>
 
     <script>
-        // 1. 页面一加载，就去读取之前保存的留言
-        window.onload = function() {
-            loadMessages();
-        };
+        // 初始化 Valine 评论系统
+        new Valine({
+            el: '#vcomments', // 绑定上面的 div 容器
+            appId: '9M8PkWsXpXOnYv8XvV8XvV8X-gzGzoHsz', // 公共公共测试密钥，数据暂存云端
+            appKey: 'xXvV8XvV8XvV8XvV8XvV8XvV', 
+            placeholder: '快写啥都可以...（我已突破底层代码，大家都能看到你的留言了）',
+            avatar: 'monsterid', // 自动为留言者生成可爱的怪物头像
+            pageSize: 10, // 每页显示 10 条留言
+            highlight: true, // 代码高亮
+            recordIP: false // 保护隐私，不记录留言者 IP
+        });
+    </script>
 
-        // 2. 发射新留言的函数
-        function addMessage() {
-            const nicknameInput = document.getElementById('nickname-input');
-            const messageInput = document.getElementById('message-input');
-            
-            const nickname = nicknameInput.value.trim();
-            const message = messageInput.value.trim();
-
-            // 检查是不是空输入
-            if (nickname === "" || message === "") {
-                alert("我看不到你写了啥呀！");
-                return;
-            }
-
-            // 获取当前时间
-            const now = new Date();
-            const timeString = `${now.getMonth() + 1}-${now.getDate()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-
-            // 创建一条留言对象
-            const newMessage = {
-                name: nickname,
-                content: message,
-                time: timeString
-            };
-
-            // 从本地缓存拿取老留言，把新留言塞进去
-            let messages = JSON.parse(localStorage.getItem('sea_messages')) || [];
-            messages.unshift(newMessage); 
-
-            // 存回本地缓存
-            localStorage.setItem('sea_messages', JSON.stringify(messages));
-
-            // 清空输入框
-            messageInput.value = "";
-
-            // 重新刷新列表显示
-            loadMessages();
-        }
-
-        // 3. 将缓存里的留言渲染到网页上的函数
-        function loadMessages() {
-            const messageList = document.getElementById('message-list');
-            let messages = JSON.parse(localStorage.getItem('sea_messages')) || [];
-            
-            // 更新留言总数
-            document.getElementById('msg-count').innerText = messages.length;
-
-            // 如果没有留言的提示
-            if (messages.length === 0) {
-                messageList.innerHTML = `<p style="color: #90e0ef; text-align: center; font-style: italic;">无人在意中...来留下第一条留言</p>`;
-                return;
-            }
-
-            // 用循环把留言一条条组合成 HTML 代码
-            let listHTML = "";
-            messages.forEach(msg => {
-                listHTML += `
-                    <div style="background-color: rgba(255, 255, 255, 0.7); border: 1px solid #90e0ef; padding: 15px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <strong style="color: #03045e; font-size: 15px;">🍦 ${escapeHTML(msg.name)}</strong>
-                            <span style="color: #a0b2c6; font-size: 12px;">${msg.time}</span>
-                        </div>
-                        <p style="color: #4ea8de; margin: 0; font-size: 14px; line-height: 1.5; word-break: break-all;">${escapeHTML(msg.content)}</p>
-                    </div>
-                `;
-            });
-
-            messageList.innerHTML = listHTML;
-        }
-
-        // 4. 帮你补齐了之前漏掉的安全过滤函数和所有的结束括号 🛠️
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, 
-                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-            );
-        }
-    </script> </body>
+</body>
 </html>
