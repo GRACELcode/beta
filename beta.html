@@ -93,4 +93,24 @@
             let listHTML = "";
             messages.forEach(msg => {
                 listHTML += `
-                    <div style="background-color: rgba(255, 255, 255, 0.7); border: 1
+                    <div style="background-color: rgba(255, 255, 255, 0.7); border: 1px solid #90e0ef; padding: 15px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <strong style="color: #03045e; font-size: 15px;">🍦 ${escapeHTML(msg.name)}</strong>
+                            <span style="color: #a0b2c6; font-size: 12px;">${msg.time}</span>
+                        </div>
+                        <p style="color: #4ea8de; margin: 0; font-size: 14px; line-height: 1.5; word-break: break-all;">${escapeHTML(msg.content)}</p>
+                    </div>
+                `;
+            });
+
+            messageList.innerHTML = listHTML;
+        }
+
+        // 4. 帮你补齐了之前漏掉的安全过滤函数和所有的结束括号 🛠️
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+    </script> </body>
+</html>
